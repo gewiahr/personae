@@ -35,3 +35,7 @@ go.work
 
 # Secret info
 crypt*
+
+# Other
+*.bu
+*.png
