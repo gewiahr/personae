@@ -1,0 +1,165 @@
+package main
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"os"
+	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+type weapon struct {
+	name       string
+	tp         string
+	rng        string
+	dmg        int
+	dls        int
+	hand1      string
+	hand2      string
+	rarity     int
+	price      string
+	qualities  string
+	additional string
+}
+
+func main() {
+	// создание нового бота с токеном
+	bot, err := tgbotapi.NewBotAPI("6424738928:AAEri79oj6b69EnkuG3qNVaDMQQ7pZdIwtg")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+
+	updates := bot.GetUpdatesChan(u)
+
+	for update := range updates {
+		if update.Message != nil { // If we got a message
+			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+			messageToReply := update.Message.Text
+
+			switch update.Message.Text {
+			case "Хида":
+				messageToReply = "Хида молодец!"
+				break
+			}
+
+			//var columns []string
+			//columns, err = rows.Columns()
+
+			// var name string
+			// var dmg int
+			// var dls int
+			weaponStats := weapon{}
+			//weaponStats := new(interface{})
+			weaponRow := new(sql.Row)
+			//err := identifyWeapon(update.Message.Text, weaponRow)
+
+			weapon_name := fmt.Sprintf("'%s'", update.Message.Text)
+			_db, _err := sql.Open("mysql", "bot:bot@(127.0.0.1:3306)/sqltest")
+			if _err != nil {
+
+			}
+			defer _db.Close()
+
+			queryString := fmt.Sprintf("SELECT * FROM weapons WHERE %s = %s;", "name", weapon_name)
+			weaponRow = _db.QueryRow(queryString)
+
+			if err != nil {
+				messageToReply = "Ошибка!"
+			} else {
+				err := weaponRow.Scan(
+					&weaponStats.name,
+					&weaponStats.tp,
+					&weaponStats.rng,
+					&weaponStats.dmg,
+					&weaponStats.dls,
+					&weaponStats.hand1,
+					&weaponStats.hand2,
+					&weaponStats.rarity,
+					&weaponStats.price,
+					&weaponStats.qualities,
+					&weaponStats.additional)
+				if err != nil {
+					messageToReply = "Нет такого оружия!"
+				} else {
+					messageToReply = fmt.Sprintf("%s наносит %d урона и имеет %d смертельности", weaponStats.name, weaponStats.dmg, weaponStats.dls)
+				}
+			}
+
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, messageToReply)
+			msg.ReplyToMessageID = update.Message.MessageID
+
+			bot.Send(msg)
+		}
+	}
+}
+
+func selectRowSQL(filter_col string, filter_value string, therow *sql.Row) error {
+	_db, _err := sql.Open("mysql", "bot:bot@(127.0.0.1:3306)/sqltest")
+	if _err != nil {
+		return _err
+	}
+	defer _db.Close()
+
+	queryString := fmt.Sprintf("SELECT * FROM weapons WHERE %s = %s;", filter_col, filter_value)
+	therow = _db.QueryRow(queryString)
+
+	return nil
+}
+
+func identifyWeapon(weapon_name string, therow *sql.Row) error {
+	weapon_name = fmt.Sprintf("'%s'", weapon_name)
+	_err := selectRowSQL("name", weapon_name, therow)
+	return _err
+}
+
+// получение данных из MySQL
+func getRowSQL(row_id string, row_value string) ([]string, error) {
+	db, err := sql.Open("mysql", "bot:bot@(127.0.0.1:3307)/sqltest")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT * FROM weapons WHERE $s = $s", row_id, row_value)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []string
+
+	for rows.Next() {
+		var name string
+		var age int
+		err = rows.Scan(&name, &age)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, fmt.Sprintf("%v - %v лет", name, age))
+	}
+
+	return result, nil
+}
+
+// запись данных в файл
+func writeDataToFile(rows []string) (string, error) {
+	filename := fmt.Sprintf("result_%v.txt", time.Now().Unix())
+
+	f, err := os.Create(filename)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	for _, row := range rows {
+		fmt.Fprintln(f, row)
+	}
+
+	return filename, nil
+}
