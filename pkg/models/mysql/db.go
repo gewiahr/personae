@@ -3,29 +3,14 @@ package db
 import (
 	"database/sql"
 	"fmt"
+
 	crypt "personaerpgcompanion/pkg"
-	"strconv"
+	botmsg "personaerpgcompanion/pkg/models/botmsg"
+
+	. "personaerpgcompanion/pkg/models"
 
 	_ "github.com/go-sql-driver/mysql"
 )
-
-type weapon struct {
-	name       string
-	tp         string
-	skill      string
-	rng        string
-	dmg        int
-	dls        int
-	hand1      string
-	hand2      string
-	rarity     int
-	price      int
-	curr       string
-	qualities  string
-	additional string
-	source     string
-	pic        string
-}
 
 var dbSettings = crypt.DBSettings("default")
 
@@ -41,7 +26,7 @@ func OpenDB(dbName string) (*sql.DB, error) {
 }
 
 func IdentifyWeapon(weaponName string, dbConnect *sql.DB) string {
-	weaponStats := weapon{}
+	stats := Weapon{}
 	weaponRow := new(sql.Row)
 	weaponName = fmt.Sprintf("'%s'", weaponName)
 	message := ""
@@ -50,95 +35,56 @@ func IdentifyWeapon(weaponName string, dbConnect *sql.DB) string {
 	weaponRow = dbConnect.QueryRow(queryString)
 
 	err := weaponRow.Scan(
-		&weaponStats.name,
-		&weaponStats.tp,
-		&weaponStats.skill,
-		&weaponStats.rng,
-		&weaponStats.dmg,
-		&weaponStats.dls,
-		&weaponStats.hand1,
-		&weaponStats.hand2,
-		&weaponStats.rarity,
-		&weaponStats.price,
-		&weaponStats.curr,
-		&weaponStats.qualities,
-		&weaponStats.additional,
-		&weaponStats.source,
-		&weaponStats.pic)
+		&stats.Name,
+		&stats.TP,
+		&stats.Skill,
+		&stats.RNG,
+		&stats.DMG,
+		&stats.DLS,
+		&stats.Hand1,
+		&stats.Hand2,
+		&stats.Rarity,
+		&stats.Price,
+		&stats.Curr,
+		&stats.Qualities,
+		&stats.Additional,
+		&stats.Source,
+		&stats.Pic)
 	if err != nil {
 		message = "Нет такого оружия!"
 	} else {
-		message = ComposeWeaponMessage(weaponStats)
+		message = botmsg.ComposeWeaponMessage(stats)
 	}
 
 	return message
 }
 
-func ComposeWeaponMessage(weaponStats weapon) string {
+func IdentifyArmor(armorName string, dbConnect *sql.DB) string {
+
+	stats := Armor{}
+	armorRow := new(sql.Row)
+	armorName = fmt.Sprintf("'%s'", armorName)
 	message := ""
-	// Name group
-	message = weaponStats.name
 
-	message += "\n"
-	for i := 0; i < len(weaponStats.name); i++ {
-		message += "="
-	}
+	queryString := fmt.Sprintf("SELECT * FROM armor WHERE %s = %s;", "name", armorName)
+	armorRow = dbConnect.QueryRow(queryString)
 
-	// Main stats
-	message += "\nУрон: " + strconv.Itoa(weaponStats.dmg)
-	message += "\nСмертельность: " + strconv.Itoa(weaponStats.dls)
-
-	message += "\n"
-
-	// Skill
-	message += "\nНавык: " + weaponStats.skill
-	// Grip
-	if weaponStats.hand1 != "X" {
-		if weaponStats.hand1 == "O" {
-			message += "\nОдноручное"
-		} else {
-			message += "\nВ одной руке: " + weaponStats.hand1
-		}
-	}
-	if weaponStats.hand2 != "X" {
-		if weaponStats.hand2 == "O" {
-			message += "\nДвуручное"
-		} else {
-			message += "\nВ двух руках: " + weaponStats.hand2
-		}
-	}
-
-	message += "\n"
-
-	// Rarity
-	message += "\nРедкость: " + strconv.Itoa(weaponStats.rarity)
-	// Price
-	message += "\nЦена: " + strconv.Itoa(weaponStats.price)
-	switch weaponStats.curr {
-	case "z":
-		message += " зени (медь)"
-		break
-	case "b":
-		message += " бу (серебро)"
-		break
-	case "k":
-		message += " коку (золото)"
-		break
-	}
-
-	message += "\n"
-
-	// Qualities
-	if weaponStats.qualities != "-" {
-		message += "\nСвойства: " + weaponStats.qualities
-	}
-	if weaponStats.additional != "-" {
-		message += "\nДополнительно: " + weaponStats.additional
-	}
-
-	// Picture
-	if len(weaponStats.pic) > 0 {
-		message += "\n" + weaponStats.pic
+	err := armorRow.Scan(
+		&stats.Name,
+		&stats.TP,
+		&stats.Phys,
+		&stats.Super,
+		&stats.Rarity,
+		&stats.Price,
+		&stats.Curr,
+		&stats.Qualities,
+		&stats.Additional,
+		&stats.Source,
+		&stats.Pic)
+	if err != nil {
+		message = "Нет такой одежды или брони!"
+	} else {
+		message = botmsg.ComposeArmorMessage(stats)
 	}
 
 	return message
