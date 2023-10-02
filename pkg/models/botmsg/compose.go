@@ -1,4 +1,4 @@
-package botmsg
+package msg
 
 import (
 	"strconv"
@@ -6,131 +6,159 @@ import (
 	. "personaerpgcompanion/pkg/models"
 )
 
-func ComposeWeaponMessage(stats Weapon) string {
-	message := ""
-	// Name group
-	message = stats.Name
+func WelcomeMessage() string {
 
-	message += "\n"
+	msg := "Вас приветствует бот Personae — ваш компаньон в мире НРИ!"
+	msg += "\n\nСейчас бот находится на стадии разработки, а функционал непрерывно дорабатывается. "
+	msg += "Чтобы предложить свои идеи или обозначить ошибку в работе бота, свяжитесь с разработчиком @gewiahr."
+	msg += "\n\nДля того чтобы узнать текущий функционал введите команду /help."
+
+	return msg
+}
+
+func CommandNotFoundMessage() string {
+
+	msg := "Команда не опознана!"
+	msg += "\nВоспользуйтесь командой /help чтобы узнать о командах бота."
+
+	return msg
+}
+
+func HelpMessage() string {
+
+	msg := "⚔️ Для поиска оружия используйте команду /w и название оружия."
+	msg += "\n👘 Для поиска брони и одежды используйте команду /a и название брони или одежды."
+	msg += "\n"
+	msg += "\nПока что бот понимает только оригинальные названия на английском языке."
+
+	return msg
+}
+
+func ComposeWeaponMessage(stats Weapon) string {
+	msg := ""
+	// Name group
+	msg = stats.Name
+
+	msg += "\n"
 	for i := 0; i < len(stats.Name); i++ {
-		message += "="
+		msg += "="
 	}
 
 	// Main stats
-	message += "\nУрон: " + strconv.Itoa(stats.DMG)
-	message += "\nСмертельность: " + strconv.Itoa(stats.DLS)
+	msg += "\nУрон: " + strconv.Itoa(stats.DMG)
+	msg += "\nСмертельность: " + strconv.Itoa(stats.DLS)
 
-	message += "\n"
+	msg += "\n"
 
 	// Skill
-	message += "\nНавык: " + stats.Skill
+	msg += "\nНавык: " + stats.Skill
 	// Grip
 	if stats.Hand1 != "X" {
 		if stats.Hand1 == "O" {
-			message += "\nОдноручное"
+			msg += "\nОдноручное"
 		} else {
-			message += "\nВ одной руке: " + stats.Hand1
+			msg += "\nВ одной руке: " + stats.Hand1
 		}
 	}
 	if stats.Hand2 != "X" {
 		if stats.Hand2 == "O" {
-			message += "\nДвуручное"
+			msg += "\nДвуручное"
 		} else {
-			message += "\nВ двух руках: " + stats.Hand2
+			msg += "\nВ двух руках: " + stats.Hand2
 		}
 	}
 
-	message += "\n"
+	msg += "\n"
 
 	// Rarity
-	message += "\nРедкость: " + strconv.Itoa(stats.Rarity)
+	msg += "\nРедкость: " + strconv.Itoa(stats.Rarity)
 	// Price
-	message += "\nЦена: " + strconv.Itoa(stats.Price)
+	msg += "\nЦена: " + strconv.Itoa(stats.Price)
 	switch stats.Curr {
 	case "z":
-		message += " зени (медь)"
+		msg += " зени (медь)"
 		break
 	case "b":
-		message += " бу (серебро)"
+		msg += " бу (серебро)"
 		break
 	case "k":
-		message += " коку (золото)"
+		msg += " коку (золото)"
 		break
 	}
 
-	message += "\n"
+	msg += "\n"
 
 	// Qualities
 	if stats.Qualities != "-" {
-		message += "\nСвойства: " + stats.Qualities
+		msg += "\nСвойства: " + stats.Qualities
 	}
-	message += "\n"
+	msg += "\n"
 	if stats.Additional != "-" {
-		message += "\nДополнительно: \n" + stats.Additional
+		msg += "\nДополнительно: \n" + stats.Additional
 	}
 
 	// Picture
 	if len(stats.Pic) > 0 {
-		message += "\n" + stats.Pic
+		msg += "\n" + stats.Pic
 	}
 
-	return message
+	return msg
 }
 
 func ComposeArmorMessage(stats Armor) string {
-	message := ""
+	msg := ""
 	// Name group
-	message = stats.Name
+	msg = stats.Name
 
-	message += "\n"
+	msg += "\n"
 	for i := 0; i < len(stats.Name); i++ {
-		message += "="
+		msg += "="
 	}
 
 	// Main stats
 	if stats.Phys+stats.Super > 0 {
-		message += "\nЗащита"
+		msg += "\nЗащита"
 		if stats.Phys > 0 {
-			message += "\nФизическая: " + strconv.Itoa(stats.Phys)
+			msg += "\nФизическая: " + strconv.Itoa(stats.Phys)
 		}
 		if stats.Super > 0 {
-			message += "\nСверхъестественная: " + strconv.Itoa(stats.Super)
+			msg += "\nСверхъестественная: " + strconv.Itoa(stats.Super)
 		}
 	}
 
-	message += "\n"
+	msg += "\n"
 
 	// Rarity
-	message += "\nРедкость: " + strconv.Itoa(stats.Rarity)
+	msg += "\nРедкость: " + strconv.Itoa(stats.Rarity)
 	// Price
-	message += "\nЦена: " + strconv.Itoa(stats.Price)
+	msg += "\nЦена: " + strconv.Itoa(stats.Price)
 	switch stats.Curr {
 	case "z":
-		message += " зени (медь)"
+		msg += " зени (медь)"
 		break
 	case "b":
-		message += " бу (серебро)"
+		msg += " бу (серебро)"
 		break
 	case "k":
-		message += " коку (золото)"
+		msg += " коку (золото)"
 		break
 	}
 
-	message += "\n"
+	msg += "\n"
 
 	// Qualities
 	if stats.Qualities != "-" {
-		message += "\nСвойства: " + stats.Qualities
+		msg += "\nСвойства: " + stats.Qualities
 	}
-	message += "\n"
+	msg += "\n"
 	if stats.Additional != "-" {
-		message += "\nДополнительно: \n" + stats.Additional
+		msg += "\nДополнительно: \n" + stats.Additional
 	}
 
 	// Picture
 	if len(stats.Pic) > 0 {
-		message += "\n" + stats.Pic
+		msg += "\n" + stats.Pic
 	}
 
-	return message
+	return msg
 }

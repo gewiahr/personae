@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	crypt "personaerpgcompanion/pkg"
-	botmsg "personaerpgcompanion/pkg/models/botmsg"
+	msg "personaerpgcompanion/pkg/models/botmsg"
 
 	. "personaerpgcompanion/pkg/models"
 
@@ -53,7 +53,7 @@ func IdentifyWeapon(weaponName string, dbConnect *sql.DB) string {
 	if err != nil {
 		message = "Нет такого оружия!"
 	} else {
-		message = botmsg.ComposeWeaponMessage(stats)
+		message = msg.ComposeWeaponMessage(stats)
 	}
 
 	return message
@@ -84,7 +84,7 @@ func IdentifyArmor(armorName string, dbConnect *sql.DB) string {
 	if err != nil {
 		message = "Нет такой одежды или брони!"
 	} else {
-		message = botmsg.ComposeArmorMessage(stats)
+		message = msg.ComposeArmorMessage(stats)
 	}
 
 	return message
