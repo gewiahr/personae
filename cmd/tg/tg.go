@@ -36,12 +36,10 @@ func main() {
 		if update.Message != nil {
 			log.Printf("[%s - %d] %s", update.Message.From.UserName, update.Message.From.ID, update.Message.Text)
 
-			messageToReply := ParseUserMessage(update.Message, dbConnect)
+			botmsgConf := new(tgbotapi.MessageConfig)
+			ParseUserMessage(update.Message, botmsgConf, dbConnect)
 
-			botmsg := tgbotapi.NewMessage(update.Message.Chat.ID, messageToReply)
-			botmsg.ParseMode = "HTML"
-
-			bot.Send(botmsg)
+			bot.Send(botmsgConf)
 		}
 	}
 }

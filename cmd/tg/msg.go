@@ -9,7 +9,9 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func ParseUserMessage(botmsg *tgbotapi.Message, dbConnect *sql.DB) string {
+func ParseUserMessage(botmsg *tgbotapi.Message, botmsgReply *tgbotapi.MessageConfig, dbConnect *sql.DB) {
+
+	botmsgReply.ChatID = botmsg.Chat.ID
 
 	messageToReply := ""
 
@@ -25,8 +27,12 @@ func ParseUserMessage(botmsg *tgbotapi.Message, dbConnect *sql.DB) string {
 			break
 		case "w":
 			messageToReply = db.IdentifyWeapon(botmsg.CommandArguments(), dbConnect)
+			break
 		case "a":
 			messageToReply = db.IdentifyArmor(botmsg.CommandArguments(), dbConnect)
+			break
+		case "t":
+			msg.TestMessage(botmsgReply)
 			break
 		default:
 			messageToReply = msg.CommandNotFoundMessage()
@@ -34,5 +40,5 @@ func ParseUserMessage(botmsg *tgbotapi.Message, dbConnect *sql.DB) string {
 		}
 	}
 
-	return messageToReply
+	botmsgReply.Text = messageToReply
 }
