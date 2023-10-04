@@ -180,6 +180,6 @@ func TestMessage(msgConf *tgbotapi.MessageConfig) {
 		),
 	)
 
-	msgConf.ReplyMarkup = numericKeyboard
+	msgConf.BaseChat.ReplyMarkup = numericKeyboard
 	msgConf.Text = "тестовое сообщение"
 }

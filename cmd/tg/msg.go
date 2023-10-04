@@ -11,7 +11,8 @@ import (
 
 func ParseUserMessage(botmsg *tgbotapi.Message, botmsgReply *tgbotapi.MessageConfig, dbConnect *sql.DB) {
 
-	botmsgReply.ChatID = botmsg.Chat.ID
+	botmsgBuffer := tgbotapi.NewMessage(botmsg.Chat.ID, "")
+	//botmsgReply.ChatID = botmsg.Chat.ID
 
 	messageToReply := ""
 
@@ -32,7 +33,8 @@ func ParseUserMessage(botmsg *tgbotapi.Message, botmsgReply *tgbotapi.MessageCon
 			messageToReply = db.IdentifyArmor(botmsg.CommandArguments(), dbConnect)
 			break
 		case "t":
-			msg.TestMessage(botmsgReply)
+			msg.TestMessage(&botmsgBuffer)
+			messageToReply = "test message"
 			break
 		default:
 			messageToReply = msg.CommandNotFoundMessage()
@@ -40,5 +42,6 @@ func ParseUserMessage(botmsg *tgbotapi.Message, botmsgReply *tgbotapi.MessageCon
 		}
 	}
 
-	botmsgReply.Text = messageToReply
+	botmsgBuffer.Text = messageToReply
+	*botmsgReply = botmsgBuffer
 }
