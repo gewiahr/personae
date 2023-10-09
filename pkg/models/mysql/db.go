@@ -89,3 +89,30 @@ func IdentifyArmor(armorName string, dbConnect *sql.DB) string {
 
 	return message
 }
+
+func SearchForArmor(armorName string, dbConnect *sql.DB) string {
+
+	var armorArray []string
+	var message string
+	var buffer string
+
+	dataQuery := fmt.Sprintf("SELECT name FROM armor WHERE name LIKE '%%%s%%';", armorName)
+	armorData, _ := dbConnect.Query(dataQuery)
+	for armorData.Next() {
+		_ = armorData.Scan(&buffer)
+		armorArray = append(armorArray, buffer)
+	}
+
+	armorArrayLength := len(armorArray)
+	if armorArrayLength == 0 {
+		message = "Нет такой одежды или брони!"
+	} else if armorArrayLength == 1 {
+		message = IdentifyArmor(armorArray[0], dbConnect)
+	} else if armorArrayLength > 1 {
+		for i := 0; i < armorArrayLength; i++ {
+			message += fmt.Sprintf("%s\n", armorArray[i])
+		}
+	}
+
+	return message
+}

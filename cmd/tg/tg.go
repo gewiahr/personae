@@ -12,6 +12,8 @@ import (
 
 func main() {
 
+	state := 0
+
 	// Bot
 	bot, err := tgbotapi.NewBotAPI(crypt.TGKey())
 	if err != nil {
@@ -37,9 +39,15 @@ func main() {
 			log.Printf("[%s - %d] %s", update.Message.From.UserName, update.Message.From.ID, update.Message.Text)
 
 			botmsgConf := new(tgbotapi.MessageConfig)
-			ParseUserMessage(update.Message, botmsgConf, dbConnect)
+			state = ParseUserMessage(update.Message, botmsgConf, dbConnect)
 
 			bot.Send(botmsgConf)
+
+			if state == 1 {
+				break
+			}
 		}
 	}
+
+	log.Printf("Bot terminated with status [%d]", state)
 }
