@@ -46,6 +46,14 @@ func main() {
 			if state == 1 {
 				break
 			}
+		} else if update.CallbackQuery != nil {
+			log.Printf("[%s - %d] %s", update.CallbackQuery.From.UserName, update.CallbackQuery.From.ID, update.CallbackQuery.Data)
+
+			botmsgConf := new(tgbotapi.MessageConfig)
+			ParseCallback(update.CallbackQuery, botmsgConf, dbConnect)
+
+			botmsgConf.BaseChat.ChatID = update.CallbackQuery.From.ID
+			bot.Send(botmsgConf)
 		}
 	}
 

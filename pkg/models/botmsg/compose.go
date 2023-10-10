@@ -49,6 +49,8 @@ func ComposeWeaponMessage(stats Weapon) string {
 	// Main stats
 	msg += "\nУрон: " + strconv.Itoa(stats.DMG)
 	msg += "\nСмертельность: " + strconv.Itoa(stats.DLS)
+	// Range
+	msg += "\nДистанция: " + stats.RNG
 
 	msg += "\n"
 

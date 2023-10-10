@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	crypt "personaerpgcompanion/pkg"
 	msg "personaerpgcompanion/pkg/models/botmsg"
@@ -22,16 +23,24 @@ func ParseUserMessage(botmsg *tgbotapi.Message, botmsgReply *tgbotapi.MessageCon
 	if !(botmsg.IsCommand()) {
 		messageToReply = msg.CommandNotFoundMessage()
 	} else {
+		arguments := botmsg.CommandArguments()
 		switch botmsg.Command() {
 		case "start":
 			messageToReply = msg.WelcomeMessage()
 		case "help":
 			messageToReply = msg.HelpMessage()
 		case "w":
-			messageToReply = db.IdentifyWeapon(botmsg.CommandArguments(), dbConnect)
+			if arguments == "" {
+				messageToReply = db.ShowWeaponMenu(&botmsgBuffer, dbConnect)
+			} else {
+				messageToReply = db.SearchForWeapon(&botmsgBuffer, arguments, dbConnect)
+			}
 		case "a":
-			messageToReply = db.SearchForArmor(botmsg.CommandArguments(), dbConnect)
-			//messageToReply = db.IdentifyArmor(botmsg.CommandArguments(), dbConnect)
+			if arguments == "" {
+				messageToReply = db.ShowArmorMenu(&botmsgBuffer, dbConnect)
+			} else {
+				messageToReply = db.SearchForArmor(&botmsgBuffer, arguments, dbConnect)
+			}
 		case "t":
 			msg.TestMessage(&botmsgBuffer)
 			messageToReply = "test message"
@@ -49,4 +58,27 @@ func ParseUserMessage(botmsg *tgbotapi.Message, botmsgReply *tgbotapi.MessageCon
 	*botmsgReply = botmsgBuffer
 
 	return status
+}
+
+func ParseCallback(callback *tgbotapi.CallbackQuery, botmsgReply *tgbotapi.MessageConfig, dbConnect *sql.DB) {
+
+	//botmsgBuffer := tgbotapi.NewMessage(callback.Message.Chat.ID, "")
+	cbData := callback.Data
+
+	if strings.Contains(cbData, "cb_armormenu_") {
+		tp := strings.TrimLeft(cbData, "cb_armormenu_")
+		botmsgReply.Text = db.ShowArmorCategory(tp, botmsgReply, dbConnect)
+	} else if strings.Contains(cbData, "cb_armorsearch_") {
+		armor := strings.TrimLeft(cbData, "cb_armorsearch_")
+		botmsgReply.Text = db.IdentifyArmor(armor, dbConnect)
+		//botmsgReply.Text = db.SearchForArmor(botmsgReply, armor, dbConnect)
+	} else if strings.Contains(cbData, "cb_weaponmenu_") {
+		tp := strings.TrimLeft(cbData, "cb_weaponmenu_")
+		botmsgReply.Text = db.ShowWeaponCategory(tp, botmsgReply, dbConnect)
+	} else if strings.Contains(cbData, "cb_weaponsearch_") {
+		weapon := strings.TrimLeft(cbData, "cb_weaponsearch_")
+		botmsgReply.Text = db.IdentifyWeapon(weapon, dbConnect)
+		//botmsgReply.Text = db.SearchForWeapon(botmsgReply, weapon, dbConnect)
+	}
+
 }
