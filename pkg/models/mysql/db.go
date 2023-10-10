@@ -33,10 +33,10 @@ func IdentifyWeapon(weaponName string, dbConnect *sql.DB) tgbotapi.MessageConfig
 
 	stats := Weapon{}
 	weaponRow := new(sql.Row)
-	weaponName = fmt.Sprintf("'%s'", weaponName)
+	weaponName = strings.Replace(weaponName, "'", "''", -1)
 	botmsg := tgbotapi.NewMessage(0, "")
 
-	queryString := fmt.Sprintf("SELECT * FROM weapon WHERE %s = %s;", "name", weaponName)
+	queryString := fmt.Sprintf("SELECT * FROM weapon WHERE %s = '%s';", "name", weaponName)
 	weaponRow = dbConnect.QueryRow(queryString)
 
 	err := weaponRow.Scan(
@@ -59,7 +59,9 @@ func IdentifyWeapon(weaponName string, dbConnect *sql.DB) tgbotapi.MessageConfig
 		botmsg.Text = "Нет такого оружия!"
 	} else {
 		botmsg.Text = msg.ComposeWeaponMessage(stats)
-		botmsg.BaseChat.ReplyMarkup = AppendQualities(stats.Qualities)
+		if stats.Qualities != "-" {
+			botmsg.BaseChat.ReplyMarkup = AppendQualities(stats.Qualities)
+		}
 	}
 
 	return botmsg
@@ -91,7 +93,9 @@ func IdentifyArmor(armorName string, dbConnect *sql.DB) tgbotapi.MessageConfig {
 		botmsg.Text = "Нет такой одежды или брони!"
 	} else {
 		botmsg.Text = msg.ComposeArmorMessage(stats)
-		botmsg.BaseChat.ReplyMarkup = AppendQualities(stats.Qualities)
+		if stats.Qualities != "-" {
+			botmsg.BaseChat.ReplyMarkup = AppendQualities(stats.Qualities)
+		}
 	}
 
 	return botmsg
@@ -128,9 +132,9 @@ func IdentifyEntity(entityType string, entityName string) (interface{}, error) {
 	stats := new(interface{})
 
 	entityRow := new(sql.Row)
-	entityName = fmt.Sprintf("'%s'", entityName)
+	entityName = strings.Replace(entityName, "'", "''", -1)
 
-	queryString := fmt.Sprintf("SELECT * FROM "+entityType+" WHERE %s = %s;", "name", entityName)
+	queryString := fmt.Sprintf("SELECT * FROM "+entityType+" WHERE %s = '%s';", "name", entityName)
 	entityRow = Connect.QueryRow(queryString)
 
 	switch entityType {
@@ -430,10 +434,6 @@ func AppendQualities(qualities string) tgbotapi.InlineKeyboardMarkup {
 	var buffer string
 	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
 	inlineButtonRow := tgbotapi.NewInlineKeyboardRow()
-
-	if qualities == "-" {
-		return inlineMenu
-	}
 
 	qualityArray := strings.Split(qualities, ", ")
 	for i := 0; len(qualityArray) > i; i++ {
