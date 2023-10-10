@@ -26,12 +26,11 @@ func main() {
 	updates := bot.GetUpdatesChan(u)
 
 	// Database
-	dbName := crypt.DBName("test")
-	dbConnect, err := db.OpenDB(dbName)
+	db.Connect, err = db.OpenDB(db.Name)
 	if err != nil {
 		log.Panic(err)
 	}
-	defer dbConnect.Close()
+	defer db.Connect.Close()
 
 	// Update
 	for update := range updates {
@@ -39,7 +38,7 @@ func main() {
 			log.Printf("[%s - %d] %s", update.Message.From.UserName, update.Message.From.ID, update.Message.Text)
 
 			botmsgConf := new(tgbotapi.MessageConfig)
-			state = ParseUserMessage(update.Message, botmsgConf, dbConnect)
+			state = ParseUserMessage(update.Message, botmsgConf, db.Connect)
 
 			bot.Send(botmsgConf)
 
@@ -50,7 +49,7 @@ func main() {
 			log.Printf("[%s - %d] %s", update.CallbackQuery.From.UserName, update.CallbackQuery.From.ID, update.CallbackQuery.Data)
 
 			botmsgConf := new(tgbotapi.MessageConfig)
-			ParseCallback(update.CallbackQuery, botmsgConf, dbConnect)
+			ParseCallback(update.CallbackQuery, botmsgConf, db.Connect)
 
 			botmsgConf.BaseChat.ChatID = update.CallbackQuery.From.ID
 			bot.Send(botmsgConf)

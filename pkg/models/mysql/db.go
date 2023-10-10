@@ -14,10 +14,12 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-var dbSettings = crypt.DBSettings("default")
+var Name = crypt.DBName("test")
+var Settings = crypt.DBSettings("default")
+var Connect *sql.DB
 
 func OpenDB(dbName string) (*sql.DB, error) {
-	db, err := sql.Open("mysql", dbSettings+dbName)
+	db, err := sql.Open("mysql", Settings+dbName)
 	if err != nil {
 		return nil, err
 	}
@@ -27,13 +29,14 @@ func OpenDB(dbName string) (*sql.DB, error) {
 	return db, nil
 }
 
-func IdentifyWeapon(weaponName string, dbConnect *sql.DB) string {
+func IdentifyWeapon(weaponName string, dbConnect *sql.DB) tgbotapi.MessageConfig {
+
 	stats := Weapon{}
 	weaponRow := new(sql.Row)
 	weaponName = fmt.Sprintf("'%s'", weaponName)
-	message := ""
+	botmsg := tgbotapi.NewMessage(0, "")
 
-	queryString := fmt.Sprintf("SELECT * FROM weapons WHERE %s = %s;", "name", weaponName)
+	queryString := fmt.Sprintf("SELECT * FROM weapon WHERE %s = %s;", "name", weaponName)
 	weaponRow = dbConnect.QueryRow(queryString)
 
 	err := weaponRow.Scan(
@@ -53,20 +56,21 @@ func IdentifyWeapon(weaponName string, dbConnect *sql.DB) string {
 		&stats.Source,
 		&stats.Pic)
 	if err != nil {
-		message = "Нет такого оружия!"
+		botmsg.Text = "Нет такого оружия!"
 	} else {
-		message = msg.ComposeWeaponMessage(stats)
+		botmsg.Text = msg.ComposeWeaponMessage(stats)
+		botmsg.BaseChat.ReplyMarkup = AppendQualities(stats.Qualities)
 	}
 
-	return message
+	return botmsg
 }
 
-func IdentifyArmor(armorName string, dbConnect *sql.DB) string {
+func IdentifyArmor(armorName string, dbConnect *sql.DB) tgbotapi.MessageConfig {
 
 	stats := Armor{}
 	armorRow := new(sql.Row)
 	armorName = strings.Replace(armorName, "'", "''", -1)
-	message := ""
+	botmsg := tgbotapi.NewMessage(0, "")
 
 	queryString := fmt.Sprintf("SELECT * FROM armor WHERE %s = '%s';", "name", armorName)
 	armorRow = dbConnect.QueryRow(queryString)
@@ -84,12 +88,130 @@ func IdentifyArmor(armorName string, dbConnect *sql.DB) string {
 		&stats.Source,
 		&stats.Pic)
 	if err != nil {
-		message = "Нет такой одежды или брони!"
+		botmsg.Text = "Нет такой одежды или брони!"
 	} else {
-		message = msg.ComposeArmorMessage(stats)
+		botmsg.Text = msg.ComposeArmorMessage(stats)
+		botmsg.BaseChat.ReplyMarkup = AppendQualities(stats.Qualities)
+	}
+
+	return botmsg
+}
+
+func IdentifyQuality(qualityName string, dbConnect *sql.DB) string {
+
+	stats := Quality{}
+	qualityRow := new(sql.Row)
+	qualityName = strings.Replace(qualityName, "'", "''", -1)
+	message := ""
+
+	queryString := fmt.Sprintf("SELECT * FROM quality WHERE %s = '%s';", "name", qualityName)
+	qualityRow = dbConnect.QueryRow(queryString)
+
+	err := qualityRow.Scan(
+		&stats.Name,
+		&stats.General,
+		&stats.Weapon,
+		&stats.Armor,
+		&stats.Source)
+	if err != nil {
+		message = "Добавление свойств в процессе!"
+	} else {
+		message = msg.ComposeQualityMessage(stats)
 	}
 
 	return message
+}
+
+func IdentifyEntity(entityType string, entityName string) (interface{}, error) { //, dbConnect *sql.DB
+
+	var err error
+	stats := new(interface{})
+
+	entityRow := new(sql.Row)
+	entityName = fmt.Sprintf("'%s'", entityName)
+
+	queryString := fmt.Sprintf("SELECT * FROM "+entityType+" WHERE %s = %s;", "name", entityName)
+	entityRow = Connect.QueryRow(queryString)
+
+	switch entityType {
+	case "weapon":
+		*stats, err = ScanWeaponRow(entityRow)
+	case "armor":
+		*stats, err = ScanArmorRow(entityRow)
+	case "quality":
+		*stats, err = ScanQualityRow(entityRow)
+	}
+
+	// if err != nil {
+	// 	message = msg.ErrorIdentify(entityType)
+	// } else {
+	// 	switch entityType {
+	// 	case "weapon":
+	// 		*stats, err = ScanWeaponRow(entityRow)
+	// 	case "armor":
+	// 		*stats, err = ScanArmorRow(entityRow)
+	// 	case "quality":
+	// 		*stats, err = ScanQualityRow(entityRow)
+	// 	}
+	// 	message = msg.ComposeWeaponMessage(stats)
+	// }
+
+	return stats, err
+}
+
+func ScanWeaponRow(weaponRow *sql.Row) (Weapon, error) {
+	var stats Weapon
+
+	err := weaponRow.Scan(
+		&stats.Name,
+		&stats.TP,
+		&stats.Skill,
+		&stats.RNG,
+		&stats.DMG,
+		&stats.DLS,
+		&stats.Hand1,
+		&stats.Hand2,
+		&stats.Rarity,
+		&stats.Price,
+		&stats.Curr,
+		&stats.Qualities,
+		&stats.Additional,
+		&stats.Source,
+		&stats.Pic)
+
+	return stats, err
+}
+
+func ScanArmorRow(armorRow *sql.Row) (Armor, error) {
+	var stats Armor
+
+	err := armorRow.Scan(
+		&stats.Name,
+		&stats.TP,
+		&stats.Phys,
+		&stats.Super,
+		&stats.Rarity,
+		&stats.Price,
+		&stats.Curr,
+		&stats.Qualities,
+		&stats.Additional,
+		&stats.Source,
+		&stats.Pic)
+
+	return stats, err
+}
+
+func ScanQualityRow(qualityRow *sql.Row) (Quality, error) {
+	var stats Quality
+
+	err := qualityRow.Scan(
+		&stats.Name,
+		&stats.General,
+		&stats.Weapon,
+		&stats.Armor,
+		&stats.Source)
+
+	return stats, err
 }
 
 func SearchForWeapon(msgConf *tgbotapi.MessageConfig, weaponName string, dbConnect *sql.DB) string {
@@ -99,7 +221,7 @@ func SearchForWeapon(msgConf *tgbotapi.MessageConfig, weaponName string, dbConne
 	var buffer string
 	weaponName = strings.Replace(weaponName, "'", "''", -1)
 
-	queryString := fmt.Sprintf("SELECT name FROM weapons WHERE name LIKE '%%%s%%';", weaponName)
+	queryString := fmt.Sprintf("SELECT name FROM weapon WHERE name LIKE '%%%s%%';", weaponName)
 	weaponData, _ := dbConnect.Query(queryString)
 	for weaponData.Next() {
 		_ = weaponData.Scan(&buffer)
@@ -110,7 +232,7 @@ func SearchForWeapon(msgConf *tgbotapi.MessageConfig, weaponName string, dbConne
 	if weaponArrayLength == 0 {
 		message = "Нет такого оружия!"
 	} else if weaponArrayLength == 1 {
-		message = IdentifyWeapon(weaponArray[0], dbConnect)
+		*msgConf = IdentifyWeapon(weaponArray[0], dbConnect)
 	} else if weaponArrayLength > 1 {
 		message = ShowWeaponList(weaponArray, msgConf)
 	}
@@ -136,12 +258,39 @@ func SearchForArmor(msgConf *tgbotapi.MessageConfig, armorName string, dbConnect
 	if armorArrayLength == 0 {
 		message = "Нет такой одежды или брони!"
 	} else if armorArrayLength == 1 {
-		message = IdentifyArmor(armorArray[0], dbConnect)
+		*msgConf = IdentifyArmor(armorArray[0], dbConnect)
 	} else if armorArrayLength > 1 {
 		message = ShowArmorList(armorArray, msgConf)
 	}
 
 	return message
+}
+
+func SearchForQualities(msgConf *tgbotapi.MessageConfig, qualityName string, dbConnect *sql.DB) string {
+
+	var qualityArray []string
+	var message string
+	var buffer string
+	qualityName = strings.Replace(qualityName, "'", "''", -1)
+
+	queryString := fmt.Sprintf("SELECT name FROM quality WHERE name LIKE '%%%s%%';", qualityName)
+	armorData, _ := dbConnect.Query(queryString)
+	for armorData.Next() {
+		_ = armorData.Scan(&buffer)
+		qualityArray = append(qualityArray, buffer)
+	}
+
+	qualityArrayLength := len(qualityArray)
+	if qualityArrayLength == 0 {
+		message = "Нет такого свойства!"
+	} else if qualityArrayLength == 1 {
+		message = IdentifyQuality(qualityArray[0], dbConnect)
+	} else if qualityArrayLength > 1 {
+		message = ShowQualityList(qualityArray, msgConf)
+	}
+
+	return message
+
 }
 
 func ShowWeaponMenu(msgConf *tgbotapi.MessageConfig, dbConnect *sql.DB) string {
@@ -151,7 +300,7 @@ func ShowWeaponMenu(msgConf *tgbotapi.MessageConfig, dbConnect *sql.DB) string {
 	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
 	inlineButtonRow := tgbotapi.NewInlineKeyboardRow()
 
-	queryString := fmt.Sprintf("SELECT DISTINCT tp FROM weapons")
+	queryString := fmt.Sprintf("SELECT DISTINCT tp FROM weapon")
 	tpData, _ := dbConnect.Query(queryString)
 	for tpData.Next() {
 		_ = tpData.Scan(&buffer)
@@ -207,7 +356,7 @@ func ShowWeaponCategory(tp string, msgConf *tgbotapi.MessageConfig, dbConnect *s
 	var buffer string
 	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
 
-	queryString := fmt.Sprintf("SELECT name FROM weapons WHERE tp = '%s'", tp)
+	queryString := fmt.Sprintf("SELECT name FROM weapon WHERE tp = '%s'", tp)
 	tpData, _ := dbConnect.Query(queryString)
 	for tpData.Next() {
 		_ = tpData.Scan(&buffer)
@@ -259,5 +408,53 @@ func ShowArmorList(armorArray []string, msgConf *tgbotapi.MessageConfig) string 
 
 	msgConf.BaseChat.ReplyMarkup = inlineMenu
 	return "Выберите броню из списка ниже:"
+
+}
+
+func ShowQualityList(qualityArray []string, msgConf *tgbotapi.MessageConfig) string {
+
+	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
+
+	for i := 0; i < len(qualityArray); i++ {
+		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(qualityArray[i], "cb_qualitysearch_"+qualityArray[i])))
+	}
+
+	msgConf.BaseChat.ReplyMarkup = inlineMenu
+	return "Выберите свойство из списка ниже:"
+
+}
+
+func AppendQualities(qualities string) tgbotapi.InlineKeyboardMarkup {
+
+	var odd = true
+	var buffer string
+	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
+	inlineButtonRow := tgbotapi.NewInlineKeyboardRow()
+
+	if qualities == "-" {
+		return inlineMenu
+	}
+
+	qualityArray := strings.Split(qualities, ", ")
+	for i := 0; len(qualityArray) > i; i++ {
+		buffer, _, _ = strings.Cut(qualityArray[i], ",")
+		qualityArray[i] = buffer
+	}
+
+	for i := 0; i < len(qualityArray); i++ {
+		if odd {
+			inlineButtonRow = tgbotapi.NewInlineKeyboardRow()
+			inlineButtonRow = append(inlineButtonRow, tgbotapi.NewInlineKeyboardButtonData(qualityArray[i], "cb_qualitysearch_"+qualityArray[i]))
+		} else {
+			inlineButtonRow = append(inlineButtonRow, tgbotapi.NewInlineKeyboardButtonData(qualityArray[i], "cb_qualitysearch_"+qualityArray[i]))
+			inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, inlineButtonRow)
+		}
+		odd = !odd
+	}
+	if !odd {
+		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, inlineButtonRow)
+	}
+
+	return inlineMenu
 
 }

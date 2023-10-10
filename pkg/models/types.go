@@ -1,5 +1,17 @@
 package types
 
+//IdItem
+
+type Entity interface {
+	Weapon | Armor | Quality
+}
+
+const (
+	WeaponStr  string = "weapon"
+	ArmorStr   string = "armor"
+	QualityStr string = "quality"
+)
+
 type Weapon struct {
 	Name  string
 	TP    string
@@ -38,4 +50,14 @@ type Armor struct {
 
 	Source string
 	Pic    string
+}
+
+type Quality struct {
+	Name    string
+	General string
+
+	Weapon bool
+	Armor  bool
+
+	Source string
 }

@@ -167,6 +167,24 @@ func ComposeArmorMessage(stats Armor) string {
 	return msg
 }
 
+func ComposeQualityMessage(stats Quality) string {
+	msg := ""
+	// Name group
+	msg = stats.Name
+
+	msg += "\n"
+	for i := 0; i < len(stats.Name); i++ {
+		msg += "="
+	}
+
+	msg += "\n"
+
+	// Main
+	msg += stats.General
+
+	return msg
+}
+
 func TestMessage(msgConf *tgbotapi.MessageConfig) {
 
 	numericKeyboard := tgbotapi.NewInlineKeyboardMarkup(
