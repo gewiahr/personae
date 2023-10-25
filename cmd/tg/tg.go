@@ -40,6 +40,7 @@ func main() {
 			botmsgConf := new(tgbotapi.MessageConfig)
 			state = ParseUserMessage(update.Message, botmsgConf, db.Connect)
 
+			botmsgConf.BaseChat.ChatID = update.Message.From.ID
 			bot.Send(botmsgConf)
 
 			if state == 1 {

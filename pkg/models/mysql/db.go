@@ -118,7 +118,7 @@ func IdentifyQuality(qualityName string, dbConnect *sql.DB) string {
 		&stats.Armor,
 		&stats.Source)
 	if err != nil {
-		message = "Добавление свойств в процессе!"
+		message = "Нет такого свойства!"
 	} else {
 		message = msg.ComposeQualityMessage(stats)
 	}

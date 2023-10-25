@@ -62,7 +62,10 @@ func ParseUserMessage(botmsg *tgbotapi.Message, botmsgReply *tgbotapi.MessageCon
 		}
 	}
 
-	botmsgBuffer.Text = messageToReply
+	if messageToReply != "" {
+		botmsgBuffer.Text = messageToReply
+	}
+	//botmsgBuffer.BaseChat.ChatID = botmsg.Chat.ID
 	*botmsgReply = botmsgBuffer
 
 	return status
