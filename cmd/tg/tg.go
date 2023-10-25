@@ -1,61 +1,56 @@
 package main
 
 import (
-	"log"
-
 	crypt "personaerpgcompanion/pkg"
 	db "personaerpgcompanion/pkg/models/mysql"
 
 	_ "github.com/go-sql-driver/mysql"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tba "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func main() {
 
-	state := 0
+	exitState := 0
 
-	// Bot
-	bot, err := tgbotapi.NewBotAPI(crypt.TGKey())
-	if err != nil {
-		log.Panic(err)
-	}
+	// Bot initialization
+	bot, err := tba.NewBotAPI(crypt.TGKey())
+	LogPanic(err, "Bot initialization")
 
-	u := tgbotapi.NewUpdate(0)
+	// Bot listen to updates
+	u := tba.NewUpdate(0)
 	u.Timeout = 60
-
 	updates := bot.GetUpdatesChan(u)
 
-	// Database
+	// Database connection
 	db.Connect, err = db.OpenDB(db.Name)
-	if err != nil {
-		log.Panic(err)
-	}
+	LogPanic(err, "Database connection")
 	defer db.Connect.Close()
 
-	// Update
+	// Listen for updates
 	for update := range updates {
 		if update.Message != nil {
-			log.Printf("[%s - %d] %s", update.Message.From.UserName, update.Message.From.ID, update.Message.Text)
+			LogMessage(update.Message)
 
-			botmsgConf := new(tgbotapi.MessageConfig)
-			state = ParseUserMessage(update.Message, botmsgConf, db.Connect)
+			botReply := new(tba.MessageConfig)
+			exitState = ParseUserMessage(update.Message, botReply, db.Connect)
 
-			botmsgConf.BaseChat.ChatID = update.Message.From.ID
-			bot.Send(botmsgConf)
+			botReply.BaseChat.ChatID = update.Message.From.ID
+			bot.Send(botReply)
 
-			if state == 1 {
-				break
-			}
 		} else if update.CallbackQuery != nil {
-			log.Printf("[%s - %d] %s", update.CallbackQuery.From.UserName, update.CallbackQuery.From.ID, update.CallbackQuery.Data)
+			LogCallback(update.CallbackQuery)
 
-			botmsgConf := new(tgbotapi.MessageConfig)
-			ParseCallback(update.CallbackQuery, botmsgConf, db.Connect)
+			botReply := new(tba.MessageConfig)
+			ParseCallback(update.CallbackQuery, botReply, db.Connect)
 
-			botmsgConf.BaseChat.ChatID = update.CallbackQuery.From.ID
-			bot.Send(botmsgConf)
+			botReply.BaseChat.ChatID = update.CallbackQuery.From.ID
+			bot.Send(botReply)
+		}
+
+		if exitState == 1 {
+			break
 		}
 	}
 
-	log.Printf("Bot terminated with status [%d]", state)
+	LogExit(exitState)
 }

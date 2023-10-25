@@ -11,7 +11,7 @@ import (
 	. "personaerpgcompanion/pkg/models"
 
 	_ "github.com/go-sql-driver/mysql"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tba "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 var Name = crypt.DBName("test")
@@ -29,12 +29,12 @@ func OpenDB(dbName string) (*sql.DB, error) {
 	return db, nil
 }
 
-func IdentifyWeapon(weaponName string, dbConnect *sql.DB) tgbotapi.MessageConfig {
+func IdentifyWeapon(weaponName string, dbConnect *sql.DB) tba.MessageConfig {
 
 	stats := Weapon{}
 	weaponRow := new(sql.Row)
 	weaponName = strings.Replace(weaponName, "'", "''", -1)
-	botmsg := tgbotapi.NewMessage(0, "")
+	botmsg := tba.NewMessage(0, "")
 
 	queryString := fmt.Sprintf("SELECT * FROM weapon WHERE %s = '%s';", "name", weaponName)
 	weaponRow = dbConnect.QueryRow(queryString)
@@ -67,12 +67,12 @@ func IdentifyWeapon(weaponName string, dbConnect *sql.DB) tgbotapi.MessageConfig
 	return botmsg
 }
 
-func IdentifyArmor(armorName string, dbConnect *sql.DB) tgbotapi.MessageConfig {
+func IdentifyArmor(armorName string, dbConnect *sql.DB) tba.MessageConfig {
 
 	stats := Armor{}
 	armorRow := new(sql.Row)
 	armorName = strings.Replace(armorName, "'", "''", -1)
-	botmsg := tgbotapi.NewMessage(0, "")
+	botmsg := tba.NewMessage(0, "")
 
 	queryString := fmt.Sprintf("SELECT * FROM armor WHERE %s = '%s';", "name", armorName)
 	armorRow = dbConnect.QueryRow(queryString)
@@ -218,7 +218,7 @@ func ScanQualityRow(qualityRow *sql.Row) (Quality, error) {
 	return stats, err
 }
 
-func SearchForWeapon(msgConf *tgbotapi.MessageConfig, weaponName string, dbConnect *sql.DB) string {
+func SearchForWeapon(msgConf *tba.MessageConfig, weaponName string, dbConnect *sql.DB) string {
 
 	var weaponArray []string
 	var message string
@@ -244,7 +244,7 @@ func SearchForWeapon(msgConf *tgbotapi.MessageConfig, weaponName string, dbConne
 	return message
 }
 
-func SearchForArmor(msgConf *tgbotapi.MessageConfig, armorName string, dbConnect *sql.DB) string {
+func SearchForArmor(msgConf *tba.MessageConfig, armorName string, dbConnect *sql.DB) string {
 
 	var armorArray []string
 	var message string
@@ -270,7 +270,7 @@ func SearchForArmor(msgConf *tgbotapi.MessageConfig, armorName string, dbConnect
 	return message
 }
 
-func SearchForQualities(msgConf *tgbotapi.MessageConfig, qualityName string, dbConnect *sql.DB) string {
+func SearchForQualities(msgConf *tba.MessageConfig, qualityName string, dbConnect *sql.DB) string {
 
 	var qualityArray []string
 	var message string
@@ -297,22 +297,22 @@ func SearchForQualities(msgConf *tgbotapi.MessageConfig, qualityName string, dbC
 
 }
 
-func ShowWeaponMenu(msgConf *tgbotapi.MessageConfig, dbConnect *sql.DB) string {
+func ShowWeaponMenu(msgConf *tba.MessageConfig, dbConnect *sql.DB) string {
 
 	var buffer string
 	var odd = true
-	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
-	inlineButtonRow := tgbotapi.NewInlineKeyboardRow()
+	inlineMenu := tba.NewInlineKeyboardMarkup()
+	inlineButtonRow := tba.NewInlineKeyboardRow()
 
 	queryString := fmt.Sprintf("SELECT DISTINCT tp FROM weapon")
 	tpData, _ := dbConnect.Query(queryString)
 	for tpData.Next() {
 		_ = tpData.Scan(&buffer)
 		if odd {
-			inlineButtonRow = tgbotapi.NewInlineKeyboardRow()
-			inlineButtonRow = append(inlineButtonRow, tgbotapi.NewInlineKeyboardButtonData(buffer, "cb_weaponmenu_"+buffer))
+			inlineButtonRow = tba.NewInlineKeyboardRow()
+			inlineButtonRow = append(inlineButtonRow, tba.NewInlineKeyboardButtonData(buffer, "cb_weaponmenu_"+buffer))
 		} else {
-			inlineButtonRow = append(inlineButtonRow, tgbotapi.NewInlineKeyboardButtonData(buffer, "cb_weaponmenu_"+buffer))
+			inlineButtonRow = append(inlineButtonRow, tba.NewInlineKeyboardButtonData(buffer, "cb_weaponmenu_"+buffer))
 			inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, inlineButtonRow)
 		}
 		odd = !odd
@@ -326,22 +326,22 @@ func ShowWeaponMenu(msgConf *tgbotapi.MessageConfig, dbConnect *sql.DB) string {
 
 }
 
-func ShowArmorMenu(msgConf *tgbotapi.MessageConfig, dbConnect *sql.DB) string {
+func ShowArmorMenu(msgConf *tba.MessageConfig, dbConnect *sql.DB) string {
 
 	var buffer string
 	var odd = true
-	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
-	inlineButtonRow := tgbotapi.NewInlineKeyboardRow()
+	inlineMenu := tba.NewInlineKeyboardMarkup()
+	inlineButtonRow := tba.NewInlineKeyboardRow()
 
 	queryString := fmt.Sprintf("SELECT DISTINCT tp FROM armor")
 	tpData, _ := dbConnect.Query(queryString)
 	for tpData.Next() {
 		_ = tpData.Scan(&buffer)
 		if odd {
-			inlineButtonRow = tgbotapi.NewInlineKeyboardRow()
-			inlineButtonRow = append(inlineButtonRow, tgbotapi.NewInlineKeyboardButtonData(buffer, "cb_armormenu_"+buffer))
+			inlineButtonRow = tba.NewInlineKeyboardRow()
+			inlineButtonRow = append(inlineButtonRow, tba.NewInlineKeyboardButtonData(buffer, "cb_armormenu_"+buffer))
 		} else {
-			inlineButtonRow = append(inlineButtonRow, tgbotapi.NewInlineKeyboardButtonData(buffer, "cb_armormenu_"+buffer))
+			inlineButtonRow = append(inlineButtonRow, tba.NewInlineKeyboardButtonData(buffer, "cb_armormenu_"+buffer))
 			inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, inlineButtonRow)
 		}
 		odd = !odd
@@ -355,16 +355,16 @@ func ShowArmorMenu(msgConf *tgbotapi.MessageConfig, dbConnect *sql.DB) string {
 
 }
 
-func ShowWeaponCategory(tp string, msgConf *tgbotapi.MessageConfig, dbConnect *sql.DB) string {
+func ShowWeaponCategory(tp string, msgConf *tba.MessageConfig, dbConnect *sql.DB) string {
 
 	var buffer string
-	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
+	inlineMenu := tba.NewInlineKeyboardMarkup()
 
 	queryString := fmt.Sprintf("SELECT name FROM weapon WHERE tp = '%s'", tp)
 	tpData, _ := dbConnect.Query(queryString)
 	for tpData.Next() {
 		_ = tpData.Scan(&buffer)
-		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(buffer, "cb_weaponsearch_"+buffer)))
+		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tba.NewInlineKeyboardRow(tba.NewInlineKeyboardButtonData(buffer, "cb_weaponsearch_"+buffer)))
 	}
 
 	msgConf.BaseChat.ReplyMarkup = inlineMenu
@@ -372,16 +372,16 @@ func ShowWeaponCategory(tp string, msgConf *tgbotapi.MessageConfig, dbConnect *s
 
 }
 
-func ShowArmorCategory(tp string, msgConf *tgbotapi.MessageConfig, dbConnect *sql.DB) string {
+func ShowArmorCategory(tp string, msgConf *tba.MessageConfig, dbConnect *sql.DB) string {
 
 	var buffer string
-	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
+	inlineMenu := tba.NewInlineKeyboardMarkup()
 
 	queryString := fmt.Sprintf("SELECT name FROM armor WHERE tp = '%s'", tp)
 	tpData, _ := dbConnect.Query(queryString)
 	for tpData.Next() {
 		_ = tpData.Scan(&buffer)
-		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(buffer, "cb_armorsearch_"+buffer)))
+		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tba.NewInlineKeyboardRow(tba.NewInlineKeyboardButtonData(buffer, "cb_armorsearch_"+buffer)))
 	}
 
 	msgConf.BaseChat.ReplyMarkup = inlineMenu
@@ -389,12 +389,12 @@ func ShowArmorCategory(tp string, msgConf *tgbotapi.MessageConfig, dbConnect *sq
 
 }
 
-func ShowWeaponList(weaponArray []string, msgConf *tgbotapi.MessageConfig) string {
+func ShowWeaponList(weaponArray []string, msgConf *tba.MessageConfig) string {
 
-	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
+	inlineMenu := tba.NewInlineKeyboardMarkup()
 
 	for i := 0; i < len(weaponArray); i++ {
-		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(weaponArray[i], "cb_weaponsearch_"+weaponArray[i])))
+		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tba.NewInlineKeyboardRow(tba.NewInlineKeyboardButtonData(weaponArray[i], "cb_weaponsearch_"+weaponArray[i])))
 	}
 
 	msgConf.BaseChat.ReplyMarkup = inlineMenu
@@ -402,12 +402,12 @@ func ShowWeaponList(weaponArray []string, msgConf *tgbotapi.MessageConfig) strin
 
 }
 
-func ShowArmorList(armorArray []string, msgConf *tgbotapi.MessageConfig) string {
+func ShowArmorList(armorArray []string, msgConf *tba.MessageConfig) string {
 
-	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
+	inlineMenu := tba.NewInlineKeyboardMarkup()
 
 	for i := 0; i < len(armorArray); i++ {
-		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(armorArray[i], "cb_armorsearch_"+armorArray[i])))
+		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tba.NewInlineKeyboardRow(tba.NewInlineKeyboardButtonData(armorArray[i], "cb_armorsearch_"+armorArray[i])))
 	}
 
 	msgConf.BaseChat.ReplyMarkup = inlineMenu
@@ -415,12 +415,12 @@ func ShowArmorList(armorArray []string, msgConf *tgbotapi.MessageConfig) string 
 
 }
 
-func ShowQualityList(qualityArray []string, msgConf *tgbotapi.MessageConfig) string {
+func ShowQualityList(qualityArray []string, msgConf *tba.MessageConfig) string {
 
-	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
+	inlineMenu := tba.NewInlineKeyboardMarkup()
 
 	for i := 0; i < len(qualityArray); i++ {
-		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData(qualityArray[i], "cb_qualitysearch_"+qualityArray[i])))
+		inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, tba.NewInlineKeyboardRow(tba.NewInlineKeyboardButtonData(qualityArray[i], "cb_qualitysearch_"+qualityArray[i])))
 	}
 
 	msgConf.BaseChat.ReplyMarkup = inlineMenu
@@ -428,12 +428,12 @@ func ShowQualityList(qualityArray []string, msgConf *tgbotapi.MessageConfig) str
 
 }
 
-func AppendQualities(qualities string) tgbotapi.InlineKeyboardMarkup {
+func AppendQualities(qualities string) tba.InlineKeyboardMarkup {
 
 	var odd = true
 	var buffer string
-	inlineMenu := tgbotapi.NewInlineKeyboardMarkup()
-	inlineButtonRow := tgbotapi.NewInlineKeyboardRow()
+	inlineMenu := tba.NewInlineKeyboardMarkup()
+	inlineButtonRow := tba.NewInlineKeyboardRow()
 
 	qualityArray := strings.Split(qualities, ", ")
 	for i := 0; len(qualityArray) > i; i++ {
@@ -443,10 +443,10 @@ func AppendQualities(qualities string) tgbotapi.InlineKeyboardMarkup {
 
 	for i := 0; i < len(qualityArray); i++ {
 		if odd {
-			inlineButtonRow = tgbotapi.NewInlineKeyboardRow()
-			inlineButtonRow = append(inlineButtonRow, tgbotapi.NewInlineKeyboardButtonData(qualityArray[i], "cb_qualitysearch_"+qualityArray[i]))
+			inlineButtonRow = tba.NewInlineKeyboardRow()
+			inlineButtonRow = append(inlineButtonRow, tba.NewInlineKeyboardButtonData(qualityArray[i], "cb_qualitysearch_"+qualityArray[i]))
 		} else {
-			inlineButtonRow = append(inlineButtonRow, tgbotapi.NewInlineKeyboardButtonData(qualityArray[i], "cb_qualitysearch_"+qualityArray[i]))
+			inlineButtonRow = append(inlineButtonRow, tba.NewInlineKeyboardButtonData(qualityArray[i], "cb_qualitysearch_"+qualityArray[i]))
 			inlineMenu.InlineKeyboard = append(inlineMenu.InlineKeyboard, inlineButtonRow)
 		}
 		odd = !odd

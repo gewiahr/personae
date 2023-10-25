@@ -3,8 +3,6 @@ package msg
 import (
 	"strconv"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-
 	. "personaerpgcompanion/pkg/models"
 )
 
@@ -183,23 +181,4 @@ func ComposeQualityMessage(stats Quality) string {
 	msg += stats.General
 
 	return msg
-}
-
-func TestMessage(msgConf *tgbotapi.MessageConfig) {
-
-	numericKeyboard := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonURL("1.com", "http://1.com"),
-			tgbotapi.NewInlineKeyboardButtonSwitch("2sw", "open 2"),
-			tgbotapi.NewInlineKeyboardButtonData("3", "3"),
-		),
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("4", "4"),
-			tgbotapi.NewInlineKeyboardButtonData("5", "5"),
-			tgbotapi.NewInlineKeyboardButtonData("6", "6"),
-		),
-	)
-
-	msgConf.BaseChat.ReplyMarkup = numericKeyboard
-	msgConf.Text = "тестовое сообщение"
 }

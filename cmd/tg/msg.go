@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 
 	crypt "personaerpgcompanion/pkg"
@@ -10,22 +9,18 @@ import (
 	msg "personaerpgcompanion/pkg/models/botmsg"
 	db "personaerpgcompanion/pkg/models/mysql"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tba "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func ParseUserMessage(botmsg *tgbotapi.Message, botmsgReply *tgbotapi.MessageConfig, dbConnect *sql.DB) int {
+func ParseUserMessage(usermsg *tba.Message, botReply *tba.MessageConfig, dbConnect *sql.DB) int {
 
 	status := 0
-	botmsgBuffer := tgbotapi.NewMessage(botmsg.Chat.ID, "")
-	//botmsgReply.ChatID = botmsg.Chat.ID
-
+	botmsgBuffer := tba.NewMessage(usermsg.Chat.ID, "")
 	messageToReply := ""
 
-	if !(botmsg.IsCommand()) {
-		messageToReply = msg.CommandNotFoundMessage()
-	} else {
-		arguments := botmsg.CommandArguments()
-		switch botmsg.Command() {
+	if usermsg.IsCommand() {
+		arguments := usermsg.CommandArguments()
+		switch usermsg.Command() {
 		case "start":
 			messageToReply = msg.WelcomeMessage()
 		case "help":
@@ -44,36 +39,34 @@ func ParseUserMessage(botmsg *tgbotapi.Message, botmsgReply *tgbotapi.MessageCon
 			}
 		case "q":
 			messageToReply = db.SearchForQualities(&botmsgBuffer, arguments, dbConnect)
-		case "t":
-			msg.TestMessage(&botmsgBuffer)
-			messageToReply = "test message"
 		case "e":
 			intf := new(interface{})
 			//a := new(Armor)
 			*intf, _ = db.IdentifyEntity(WeaponStr, arguments)
 			//botmsgBuffer
 		case "z":
-			if botmsg.From.ID == crypt.ManageID() {
+			if usermsg.From.ID == crypt.ManageID() {
 				status = 1
-				messageToReply = fmt.Sprintf("Bot terminated with status [%d]", status)
 			}
 		default:
 			messageToReply = msg.CommandNotFoundMessage()
 		}
+	} else {
+		messageToReply = msg.CommandNotFoundMessage()
 	}
 
 	if messageToReply != "" {
 		botmsgBuffer.Text = messageToReply
 	}
 	//botmsgBuffer.BaseChat.ChatID = botmsg.Chat.ID
-	*botmsgReply = botmsgBuffer
+	*botReply = botmsgBuffer
 
 	return status
 }
 
-func ParseCallback(callback *tgbotapi.CallbackQuery, botmsgReply *tgbotapi.MessageConfig, dbConnect *sql.DB) {
+func ParseCallback(callback *tba.CallbackQuery, botmsgReply *tba.MessageConfig, dbConnect *sql.DB) {
 
-	//botmsgBuffer := tgbotapi.NewMessage(callback.Message.Chat.ID, "")
+	//botmsgBuffer := tba.NewMessage(callback.Message.Chat.ID, "")
 	cbData := callback.Data
 
 	if strings.Contains(cbData, "cb_armormenu_") {
