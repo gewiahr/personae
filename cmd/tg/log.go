@@ -24,6 +24,10 @@ func LogCallback(callback *tba.CallbackQuery) {
 	log.Printf("[%s - %d] %s", callback.From.UserName, callback.From.ID, callback.Data)
 }
 
+func LogCallbackError(callback *tba.CallbackQuery, message string) {
+	log.Printf("ERROR IN CALLBACK: %s\n[%s - %d] %s", message, callback.From.UserName, callback.From.ID, callback.Data)
+}
+
 func LogExit(exitState int) {
 	log.Printf("Bot terminated with status [%d]", exitState)
 }

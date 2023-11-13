@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	crypt "personaerpgcompanion/pkg"
-	. "personaerpgcompanion/pkg/models"
+	_ "personaerpgcompanion/pkg/models"
 	msg "personaerpgcompanion/pkg/models/botmsg"
 	db "personaerpgcompanion/pkg/models/mysql"
 
@@ -20,29 +20,22 @@ func ParseUserMessage(usermsg *tba.Message, botReply *tba.MessageConfig, dbConne
 
 	if usermsg.IsCommand() {
 		arguments := usermsg.CommandArguments()
-		switch usermsg.Command() {
+		command := usermsg.Command()
+		switch command {
 		case "start":
 			messageToReply = msg.WelcomeMessage()
 		case "help":
 			messageToReply = msg.HelpMessage()
 		case "w":
-			if arguments == "" {
-				messageToReply = db.ShowWeaponMenu(&botmsgBuffer, dbConnect)
-			} else {
-				messageToReply = db.SearchForWeapon(&botmsgBuffer, arguments, dbConnect)
-			}
+			ReplyToInfoCommand(&botmsgBuffer, command, arguments, dbConnect) // messageToReply = ReplyToWeaponCommand(&botmsgBuffer, arguments, dbConnect)
 		case "a":
-			if arguments == "" {
-				messageToReply = db.ShowArmorMenu(&botmsgBuffer, dbConnect)
-			} else {
-				messageToReply = db.SearchForArmor(&botmsgBuffer, arguments, dbConnect)
-			}
+			ReplyToInfoCommand(&botmsgBuffer, command, arguments, dbConnect)
 		case "q":
-			messageToReply = db.SearchForQualities(&botmsgBuffer, arguments, dbConnect)
+			ReplyToInfoCommand(&botmsgBuffer, command, arguments, dbConnect) //messageToReply = db.SearchForQualities(&botmsgBuffer, arguments, dbConnect)
 		case "e":
-			intf := new(interface{})
+			//intf := new(interface{})
 			//a := new(Armor)
-			*intf, _ = db.IdentifyEntity(WeaponStr, arguments)
+			//*intf, _ = db.IdentifyEntity(Command["w"], arguments)
 			//botmsgBuffer
 		case "z":
 			if usermsg.From.ID == crypt.ManageID() {
@@ -64,29 +57,44 @@ func ParseUserMessage(usermsg *tba.Message, botReply *tba.MessageConfig, dbConne
 	return status
 }
 
-func ParseCallback(callback *tba.CallbackQuery, botmsgReply *tba.MessageConfig, dbConnect *sql.DB) {
+func ParseCallback(callback *tba.CallbackQuery, botReply *tba.MessageConfig, dbConnect *sql.DB) {
 
-	//botmsgBuffer := tba.NewMessage(callback.Message.Chat.ID, "")
-	cbData := callback.Data
-
-	if strings.Contains(cbData, "cb_armormenu_") {
-		tp := strings.TrimLeft(cbData, "cb_armormenu_")
-		botmsgReply.Text = db.ShowArmorCategory(tp, botmsgReply, dbConnect)
-	} else if strings.Contains(cbData, "cb_armorsearch_") {
-		armor := strings.TrimLeft(cbData, "cb_armorsearch_")
-		*botmsgReply = db.IdentifyArmor(armor, dbConnect)
-		//botmsgReply.Text = db.SearchForArmor(botmsgReply, armor, dbConnect)
-	} else if strings.Contains(cbData, "cb_weaponmenu_") {
-		tp := strings.TrimLeft(cbData, "cb_weaponmenu_")
-		botmsgReply.Text = db.ShowWeaponCategory(tp, botmsgReply, dbConnect)
-	} else if strings.Contains(cbData, "cb_weaponsearch_") {
-		weapon := strings.TrimLeft(cbData, "cb_weaponsearch_")
-		*botmsgReply = db.IdentifyWeapon(weapon, dbConnect)
-		//botmsgReply.Text = db.SearchForWeapon(botmsgReply, weapon, dbConnect)
-	} else if strings.Contains(cbData, "cb_qualitysearch_") {
-		quality := strings.TrimLeft(cbData, "cb_qualitysearch_")
-		botmsgReply.Text = db.IdentifyQuality(quality, dbConnect)
-		//botmsgReply.Text = db.SearchForWeapon(botmsgReply, weapon, dbConnect)
+	cbData := strings.Split(callback.Data, "_")
+	if cbData[0] != "cb" {
+		LogCallbackError(callback, "sterror")
+		return
 	}
+
+	message := ""
+
+	switch cbData[1] {
+	case "exact":
+		message = ReplyWithSingleEntity(botReply, cbData[3], cbData[2], dbConnect)
+	case "category":
+		entities := db.SearchForEntitiesByCategory(cbData[2], cbData[3], dbConnect)
+		entitiesAmmount := len(entities)
+		if entitiesAmmount == 0 {
+			message = "Не найдено!"
+		} else if entitiesAmmount == 1 {
+			message = ReplyWithSingleEntity(botReply, entities[0], cbData[2], dbConnect)
+		} else if entitiesAmmount > 1 {
+			botReply.BaseChat.ReplyMarkup = ConstructButtonMenu(entities, cbData[2], "exact")
+			message = "Найдено несколько вариантов:"
+		}
+
+	case "list":
+		entities := db.SearchForEntities(cbData[2], cbData[3], dbConnect)
+		entitiesAmmount := len(entities)
+		if entitiesAmmount == 0 {
+			message = "Не найдено!"
+		} else if entitiesAmmount == 1 {
+			message = ReplyWithSingleEntity(botReply, entities[0], cbData[2], dbConnect)
+		} else if entitiesAmmount > 1 {
+			botReply.BaseChat.ReplyMarkup = ConstructButtonMenu(entities, cbData[2], "exact")
+			message = "Найдено несколько вариантов:"
+		}
+	}
+
+	botReply.Text = message
 
 }

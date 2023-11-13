@@ -28,10 +28,28 @@ func HelpMessage() string {
 
 	msg := "⚔️ Для поиска оружия используйте команду /w и название оружия."
 	msg += "\n👘 Для поиска брони и одежды используйте команду /a и название брони или одежды."
+	msg += "\n👘 Для поиска свойств оружия и брони используйте команду /q и название свойства."
 	msg += "\n"
 	msg += "\nПока что бот понимает только оригинальные названия на английском языке."
 
 	return msg
+}
+
+func ComposeEntityMessage(entity Entity, entityType string) string {
+
+	message := ""
+
+	switch entityType {
+	case Command["w"]:
+		message = ComposeWeaponMessage(entity.(Weapon))
+	case Command["a"]:
+		message = ComposeArmorMessage(entity.(Armor))
+	case Command["q"]:
+		message = ComposeQualityMessage(entity.(Quality))
+	}
+
+	return message
+
 }
 
 func ComposeWeaponMessage(stats Weapon) string {
